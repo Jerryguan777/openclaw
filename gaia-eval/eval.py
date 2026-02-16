@@ -59,7 +59,7 @@ def load_dataset_questions(data_dir: str, level: int | None, split: str = "valid
 
 
 def run_agent(question: str, file_path: str | None, provider: str, model: str,
-              thinking: str, timeout: int, workspace: str) -> dict:
+              thinking: str, timeout: int, workspace: str, api_key: str | None = None) -> dict:
     """Call the GAIA agent CLI and parse the JSON result."""
     cmd = [
         "npx", "tsx", str(GAIA_CLI),
@@ -73,6 +73,8 @@ def run_agent(question: str, file_path: str | None, provider: str, model: str,
     ]
     if file_path:
         cmd.extend(["--file", file_path])
+    if api_key:
+        cmd.extend(["--api-key", api_key])
 
     try:
         result = subprocess.run(
@@ -143,6 +145,8 @@ def main():
                         help="Resume from this task_id (skip earlier tasks)")
     parser.add_argument("--workspace", default=None,
                         help="Working directory for agent temp files")
+    parser.add_argument("--api-key", default=None,
+                        help="API key (overrides env/auth-profiles)")
     args = parser.parse_args()
 
     # Setup
@@ -229,6 +233,7 @@ def main():
             thinking=args.thinking,
             timeout=args.timeout,
             workspace=workspace,
+            api_key=args.api_key,
         )
 
         model_answer = agent_result.get("finalAnswer", "")

@@ -23,6 +23,7 @@ async function main() {
       thinking: { type: "string", short: "t", default: "high" },
       timeout: { type: "string", default: "600000" },
       workspace: { type: "string", short: "w" },
+      "api-key": { type: "string", short: "k" },
       json: { type: "boolean", default: false },
     },
     strict: true,
@@ -39,6 +40,7 @@ async function main() {
     console.error("  -t, --thinking   Thinking level (default: high)");
     console.error("  --timeout        Timeout in ms (default: 600000)");
     console.error("  -w, --workspace  Working directory for temp files");
+    console.error("  -k, --api-key    API key (overrides env/auth-profiles)");
     console.error("  --json           Output result as JSON (for eval harness)");
     process.exit(1);
   }
@@ -51,6 +53,7 @@ async function main() {
     thinkLevel: values.thinking,
     timeoutMs: Number.parseInt(values.timeout ?? "600000", 10),
     workspaceDir: values.workspace,
+    apiKey: values["api-key"],
   });
 
   if (values.json) {

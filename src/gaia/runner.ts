@@ -35,6 +35,8 @@ export type GaiaRunParams = {
   workspaceDir?: string;
   /** Agent directory for auth/model discovery */
   agentDir?: string;
+  /** Direct API key (overrides env/auth-profiles lookup) */
+  apiKey?: string;
 };
 
 export type GaiaRunResult = {
@@ -106,15 +108,31 @@ export async function runGaiaQuestion(params: GaiaRunParams): Promise<GaiaRunRes
     };
   }
 
-  // Set API key
-  const apiKeyInfo = await getApiKeyForModel({
-    model,
-    cfg: config,
-    store: { profiles: {}, version: 1 },
-    agentDir,
-  });
-  if (apiKeyInfo.apiKey) {
-    authStorage.setRuntimeApiKey(model.provider, apiKeyInfo.apiKey);
+  // Set API key — direct param > env var > auth-profiles
+  if (params.apiKey) {
+    authStorage.setRuntimeApiKey(model.provider, params.apiKey);
+  } else {
+    try {
+      const apiKeyInfo = await getApiKeyForModel({
+        model,
+        cfg: config,
+        store: { profiles: {}, version: 1 },
+        agentDir,
+      });
+      if (apiKeyInfo.apiKey) {
+        authStorage.setRuntimeApiKey(model.provider, apiKeyInfo.apiKey);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        fullResponse: "",
+        finalAnswer: "",
+        sessionId,
+        durationMs: Date.now() - started,
+        timedOut: false,
+        error: `API key error: ${msg}`,
+      };
+    }
   }
 
   // --- Build prompt ---
